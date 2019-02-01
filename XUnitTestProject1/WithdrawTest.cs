@@ -40,7 +40,7 @@ namespace XUnitTestProject1
             try
             {
                 var currencyHttpServiceMock = new Mock<ICurrencyHttpService>();
-                currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(new Task<double>(() => { return 2.9; }));
+                currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(Task.Run(() => { return 0.0; }));
 
                 var aTMServiceMock = new Mock<ATMService>(currencyHttpServiceMock.Object);
                 aTMServiceMock.Setup(p => p.Withdraw(It.IsAny<int>(), It.IsAny<string>()))
