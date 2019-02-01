@@ -8,6 +8,7 @@ namespace Services.Interfaces
 {
     public interface IATMService
     {
-        
+        Task Withdraw(int amount, Currency currency, string address, Country country);
+        Task Withdraw(int amount, string address);
     }
 }

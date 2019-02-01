@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Repositories.Interfaces;
 using Repositories.Models;
 using Services.Interfaces;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace RepositoryPresentation.Controllers
 {
@@ -16,11 +12,14 @@ namespace RepositoryPresentation.Controllers
     {
         private readonly IProductService _productService;
         private readonly ITransactionManager _transactionManager;
+        private readonly IATMService _aTMService;
 
-        public ProductsController(IProductService productService, ITransactionManager transactionManager)
+        public ProductsController(IProductService productService, ITransactionManager transactionManager, IATMService aTMService)
         {
+            _aTMService = aTMService;
             _productService = productService;
             _transactionManager = transactionManager;
+            _aTMService.Withdraw(10, Currency.USD, "", Country.Germany);
         }
 
         [HttpGet]
