@@ -5,22 +5,25 @@ using System;
 using System.Threading.Tasks;
 using System.Linq;
 using Repositories.Models;
+using Repositories.Interfaces;
 
 namespace Services.Services
 {
     public class ATMService : IATMService
     {
-        private readonly ATMRepository _aTMRepository = new ATMRepository(new ApplicationDbContext());
-        private ICurrencyHttpService _currencyHttpService; // = new CurrencyHttpService();
+        //private readonly ATMRepository _aTMRepository = new ATMRepository(new ApplicationDbContext());
+        private ICurrencyHttpService _currencyHttpService;
+        private IATMRepository _aTMRepository;
 
-        public ATMService(ICurrencyHttpService currencyHttpService)
+        public ATMService(ICurrencyHttpService currencyHttpService, IATMRepository aTMRepository)
         {
             _currencyHttpService = currencyHttpService;
+            _aTMRepository = aTMRepository;
         }
 
         public async Task InitATM()
         {
-            await _aTMRepository.CreateAsync(new BankTransaction() { Amount = 10000, ATMAddress = "Prospekt Nauki 37", IsDebit = true, TransactionDate = DateTime.Now });
+            //await _aTMRepository.CreateAsync(new BankTransaction() { Amount = 10000, ATMAddress = "Prospekt Nauki 37", IsDebit = true, TransactionDate = DateTime.Now });
         }
 
         public async Task Withdraw(int amount, Currency currency, string address, Country country)

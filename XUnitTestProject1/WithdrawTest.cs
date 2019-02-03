@@ -1,8 +1,11 @@
 using Moq;
+using Repositories.Interfaces;
 using Repositories.Models;
 using Services.Interfaces;
 using Services.Services;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -18,15 +21,17 @@ namespace XUnitTestProject1
         [Fact]
         public async void WithdrawEmptyAdress()
         {
-            var currencyHttpServiceMock = new Mock<ICurrencyHttpService>();
-            var mock = new Mock<ATMService>(currencyHttpServiceMock.Object);
-            mock.Setup(p => p.Withdraw(It.IsAny<int>(), It.IsAny<string>())).Callback<int, string>((i, j) => CheckValues(i, j));
-            var aTMService = mock.Object;
-
             try
             {
-                await aTMService.Withdraw(2000, Currency.USD, "", Country.Germany);
-                throw new Exception();
+                var currencyHttpServiceMock = new Mock<ICurrencyHttpService>();
+                currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(Task.Run(() => { return 10.0; }));
+
+                var aTMRepositoryMock = new Mock<IATMRepository>();
+                aTMRepositoryMock.Setup(m => m.CreateAsync(new BankTransaction())).Returns(Task.Run(() => { return new BankTransaction(); }));
+
+                ATMService service = new ATMService(currencyHttpServiceMock.Object, aTMRepositoryMock.Object);
+                await service.Withdraw(100, Currency.EURO, "", Country.Germany);
+                Assert.True(false, "Test failed");
             }
             catch (Exception ex)
             {
@@ -42,32 +47,41 @@ namespace XUnitTestProject1
                 var currencyHttpServiceMock = new Mock<ICurrencyHttpService>();
                 currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(Task.Run(() => { return 0.0; }));
 
-                var aTMServiceMock = new Mock<ATMService>(currencyHttpServiceMock.Object);
-                aTMServiceMock.Setup(p => p.Withdraw(It.IsAny<int>(), It.IsAny<string>()))
-                    .Callback<int, string>((i, j) => CheckValues(i, j));
-                var aTMService = aTMServiceMock.Object;
-                await aTMService.Withdraw(100, Currency.EURO, "", Country.Germany);
-                return;
+                var aTMRepositoryMock = new Mock<IATMRepository>();
+                aTMRepositoryMock.Setup(m => m.CreateAsync(new BankTransaction())).Returns(Task.Run(() => { return new BankTransaction(); }));
+
+                ATMService service = new ATMService(currencyHttpServiceMock.Object, aTMRepositoryMock.Object);
+                await service.Withdraw(100, Currency.EURO, "address", Country.Germany);
+                Assert.True(false, "Test failed");
+            }
+            catch (Exception ex)
+            {
+                Assert.Equal("Amount cant be less or equals then zero", ex.Message);
+            }
+        }
+
+        [Fact]
+        public async void WithdrawSuccessful()
+        {
+            try
+            {
+                var currencyHttpServiceMock = new Mock<ICurrencyHttpService>();
+                currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(Task.Run(() => { return 10.0; }));
+
+                var aTMRepositoryMock = new Mock<IATMRepository>();
+                aTMRepositoryMock.Setup(m => m.CreateAsync(new BankTransaction())).Returns(Task.Run(() => { return new BankTransaction(); }));
+
+                var list = new List<BankTransaction>();
+                list.Add(new BankTransaction { Amount = 900 });
+                aTMRepositoryMock.Setup(m => m.All).Returns(list.AsQueryable());
+
+                ATMService service = new ATMService(currencyHttpServiceMock.Object, aTMRepositoryMock.Object);
+                await service.Withdraw(100, Currency.EURO, "address", Country.Germany);
+
             }
             catch (Exception ex)
             {
                 throw;
-            }
-        }
-
-        private void CheckValues(int amount, string address)
-        {
-            if (amount <= 0)
-            {
-                throw new Exception("Amount cant be less or equals then zero");
-            }
-            if (amount % 100 > 0)
-            {
-                throw new Exception("Amount is incorrect");
-            }
-            if (string.IsNullOrWhiteSpace(address))
-            {
-                throw new Exception("Address is incorrect");
             }
         }
     }
