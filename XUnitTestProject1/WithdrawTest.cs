@@ -19,44 +19,56 @@ namespace XUnitTestProject1
         }
 
         [Fact]
-        public async void WithdrawEmptyAdress()
+        public async void WithdrawUSDFromGermany()
         {
             try
             {
                 var currencyHttpServiceMock = new Mock<ICurrencyHttpService>();
-                currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(Task.Run(() => { return 10.0; }));
+                currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(Task.Run(() => { return 2.0; }));
+                var list = new List<BankTransaction>();
+                list.Add(new BankTransaction { Amount = 900 });
+                var transaction = new BankTransaction();
 
                 var aTMRepositoryMock = new Mock<IATMRepository>();
-                aTMRepositoryMock.Setup(m => m.CreateAsync(new BankTransaction())).Returns(Task.Run(() => { return new BankTransaction(); }));
+                aTMRepositoryMock.Setup(m => m.All).Returns(list.AsQueryable());
+                aTMRepositoryMock.Setup(m => m.CreateAsync(It.IsAny<BankTransaction>()))
+                    .Callback<BankTransaction>(c => transaction = c)
+                    .Returns(Task.Run(() => { return new BankTransaction(); }));
 
                 ATMService service = new ATMService(currencyHttpServiceMock.Object, aTMRepositoryMock.Object);
-                await service.Withdraw(100, Currency.EURO, "", Country.Germany);
-                Assert.True(false, "Test failed");
+                await service.Withdraw(111, Currency.USD, "address", Country.Germany);
+                Assert.Equal(-100, transaction.Amount);
             }
             catch (Exception ex)
             {
-                Assert.Equal("Address is incorrect", ex.Message);
+                throw;
             }
         }
 
         [Fact]
-        public async void WithdrawRateNotCorrect()
+        public async void WithdrawEurosFromUSASuccess()
         {
             try
             {
                 var currencyHttpServiceMock = new Mock<ICurrencyHttpService>();
-                currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(Task.Run(() => { return 0.0; }));
+                currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(Task.Run(() => { return 2.0; }));
+                var list = new List<BankTransaction>();
+                list.Add(new BankTransaction { Amount = 900 });
+                var transaction = new BankTransaction();
 
                 var aTMRepositoryMock = new Mock<IATMRepository>();
-                aTMRepositoryMock.Setup(m => m.CreateAsync(new BankTransaction())).Returns(Task.Run(() => { return new BankTransaction(); }));
-
+                aTMRepositoryMock.Setup(m => m.All).Returns(list.AsQueryable());
+                aTMRepositoryMock.Setup(m => m.CreateAsync(It.IsAny<BankTransaction>()))
+                    .Callback<BankTransaction>(c => transaction = c)
+                    .Returns(Task.Run(() => { return new BankTransaction(); }));
+                
                 ATMService service = new ATMService(currencyHttpServiceMock.Object, aTMRepositoryMock.Object);
-                await service.Withdraw(100, Currency.EURO, "address", Country.Germany);
-                Assert.True(false, "Test failed");
+                await service.Withdraw(100, Currency.EURO, "address", Country.USA);
+                Assert.Equal(-200, transaction.Amount);
             }
             catch (Exception ex)
             {
-                Assert.Equal("Amount cant be less or equals then zero", ex.Message);
+                throw;
             }
         }
 
