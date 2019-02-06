@@ -19,7 +19,7 @@ namespace XUnitTestProject1
         }
 
         [Fact]
-        public async void WithdrawUSDFromGermany()
+        public async void WithdrawUSDFromGermanySuccess()
         {
             try
             {
@@ -27,17 +27,18 @@ namespace XUnitTestProject1
                 currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(Task.Run(() => { return 2.0; }));
                 var list = new List<BankTransaction>();
                 list.Add(new BankTransaction { Amount = 900 });
-                var transaction = new BankTransaction();
 
                 var aTMRepositoryMock = new Mock<IATMRepository>();
                 aTMRepositoryMock.Setup(m => m.All).Returns(list.AsQueryable());
                 aTMRepositoryMock.Setup(m => m.CreateAsync(It.IsAny<BankTransaction>()))
-                    .Callback<BankTransaction>(c => transaction = c)
+                    .Callback<BankTransaction>(c => list.Add(c))
                     .Returns(Task.Run(() => { return new BankTransaction(); }));
 
                 ATMService service = new ATMService(currencyHttpServiceMock.Object, aTMRepositoryMock.Object);
                 await service.Withdraw(111, Currency.USD, "address", Country.Germany);
-                Assert.Equal(-100, transaction.Amount);
+                await service.Withdraw(111, Currency.USD, "address", Country.Germany);
+                await service.Withdraw(111, Currency.USD, "address", Country.Germany);
+                Assert.Equal(600, list.Sum(x => x.Amount));
             }
             catch (Exception ex)
             {
@@ -54,17 +55,17 @@ namespace XUnitTestProject1
                 currencyHttpServiceMock.Setup(m => m.GetEuroToUSdRate()).Returns(Task.Run(() => { return 2.0; }));
                 var list = new List<BankTransaction>();
                 list.Add(new BankTransaction { Amount = 900 });
-                var transaction = new BankTransaction();
 
                 var aTMRepositoryMock = new Mock<IATMRepository>();
                 aTMRepositoryMock.Setup(m => m.All).Returns(list.AsQueryable());
                 aTMRepositoryMock.Setup(m => m.CreateAsync(It.IsAny<BankTransaction>()))
-                    .Callback<BankTransaction>(c => transaction = c)
+                    .Callback<BankTransaction>(c => list.Add(c))
                     .Returns(Task.Run(() => { return new BankTransaction(); }));
                 
                 ATMService service = new ATMService(currencyHttpServiceMock.Object, aTMRepositoryMock.Object);
                 await service.Withdraw(100, Currency.EURO, "address", Country.USA);
-                Assert.Equal(-200, transaction.Amount);
+                var a = list.Sum(x => x.Amount);
+                Assert.Equal(700, list.Sum(x => x.Amount));
             }
             catch (Exception ex)
             {
